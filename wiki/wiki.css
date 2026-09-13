@@ -422,6 +422,11 @@ ul.leaders li {
   border-bottom: 1px solid var(--border);
 }
 
+.member-role {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .site-footer {
   margin-top: 3rem;
   padding-top: 1.5rem;
