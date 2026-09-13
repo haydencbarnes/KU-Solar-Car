@@ -1,0 +1,116 @@
+      <section class="adopt-widget-interactive" aria-labelledby="adopt-interactive-h">
+        <h2 id="adopt-interactive-h">Donor cell grid</h2>
+        <p class="muted">Hover a cell to see donor details (archival campaign data). Search filters by donor name.</p>
+        <div class="adopt-donor-row">
+          <div id="donor-text-box" class="adopt-donor-box" hidden>
+            <p id="donor-text" class="adopt-donor-text">Text</p>
+          </div>
+        </div>
+        <div class="adopt-svg-wrap">
+__ADOPT_SVG__
+        </div>
+        <p class="adopt-search-label"><label for="cell-search">Search donors</label></p>
+        <input type="search" id="cell-search" class="adopt-search-input" placeholder="Type a name…" autocomplete="off">
+        <script type="text/javascript">
+(function () {
+  const BASE_COLOR = "#3b3c3e";
+  const HIGHLIGHT_COLOR = "#e4e4e7";
+  const DONOR_ROWS = __ADOPT_ROWS_JSON__;
+  let cells = [];
+  let donor_list = [];
+
+  function parseRows(rows) {
+    donor_list = [];
+    for (const row of rows) {
+      const name = row.names || "";
+      const date = row.date || "";
+      const amount = row.amount || "";
+      const ncells = parseInt(String(row.cell_count || "0").trim(), 10) || 0;
+      let subtext = date;
+      if (amount) subtext += (subtext ? " | " : "") + amount;
+      for (let j = 0; j < ncells; j++) {
+        donor_list.push({ name: name, amount: subtext, cells: ncells });
+      }
+    }
+    if (donor_list.length > cells.length) {
+      donor_list = donor_list.slice(0, cells.length);
+    }
+    populate();
+  }
+
+  function populate() {
+    const textdiv = document.getElementById("donor-text-box");
+    const text_elem = document.getElementById("donor-text");
+    if (textdiv) textdiv.hidden = true;
+
+    for (let i = 0; i < cells.length; i++) {
+      const poly = cells[i];
+      poly.style.fill = BASE_COLOR;
+      if (i < donor_list.length) {
+        poly.addEventListener("mouseover", () => {
+          const donor_name = donor_list[i].name;
+          const donor_amount = donor_list[i].amount;
+          text_elem.innerText = donor_name + "\n" + donor_amount;
+          if (textdiv) textdiv.hidden = false;
+          for (let j = i; j >= 0; j--) {
+            if (donor_list[j].name === donor_name) {
+              cells[j].style.fill = HIGHLIGHT_COLOR;
+            } else {
+              break;
+            }
+          }
+          for (let j = i + 1; j < donor_list.length; j++) {
+            if (donor_list[j].name === donor_name) {
+              cells[j].style.fill = HIGHLIGHT_COLOR;
+            } else {
+              break;
+            }
+          }
+        });
+        poly.addEventListener("mouseout", () => {
+          if (textdiv) textdiv.hidden = true;
+          for (let k = 0; k < cells.length; k++) {
+            cells[k].style.fill = BASE_COLOR;
+            cells[k].style.opacity = k < donor_list.length ? "1" : "0.5";
+          }
+        });
+      } else {
+        poly.style.opacity = "0.5";
+      }
+    }
+  }
+
+  function runSearch(q) {
+    const needle = q.toLowerCase().trim();
+    for (let i = 0; i < cells.length; i++) {
+      const d = donor_list[i];
+      if (!d) {
+        cells[i].style.opacity = "0.5";
+        continue;
+      }
+      if (!needle || d.name.toLowerCase().includes(needle)) {
+        cells[i].style.opacity = "1";
+      } else {
+        cells[i].style.opacity = "0.5";
+      }
+    }
+  }
+
+  function boot() {
+    const root = document.getElementById("car");
+    if (!root) return;
+    cells = Array.from(root.querySelectorAll("polygon"));
+    if (!cells.length) return;
+    const search = document.getElementById("cell-search");
+    if (search) search.addEventListener("input", (e) => runSearch(e.target.value));
+    parseRows(DONOR_ROWS);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+        </script>
+      </section>
